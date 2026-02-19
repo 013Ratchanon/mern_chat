@@ -41,8 +41,9 @@ export const useThemeStore = create(
   persist(
     (set) => ({
       theme: "dark",
-      setTheme: (name) => set((state) => (THEMES.includes(name) ? { theme: name } : state)),
+      setTheme: (name) =>
+        set((state) => (THEMES.includes(name) ? { theme: name } : state)),
     }),
-    { name: "se-chat-theme" }
-  )
+    { name: "se-chat-theme" },
+  ),
 );

@@ -62,6 +62,7 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
+  console.log("Login request body:", req.body); // Debug log
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).send({
@@ -224,10 +225,7 @@ exports.searchUsers = async (req, res) => {
     }
     const users = await UserModel.find({
       _id: { $ne: me },
-      $or: [
-        { email: new RegExp(q, "i") },
-        { fullname: new RegExp(q, "i") },
-      ],
+      $or: [{ email: new RegExp(q, "i") }, { fullname: new RegExp(q, "i") }],
     })
       .select("fullname email profilePicture _id createdAt")
       .limit(20)

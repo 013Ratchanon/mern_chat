@@ -1,20 +1,20 @@
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuthStore } from "../stores/useAuth";
+import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  const location = useLocation();
+  const authUser = useAuthStore((state) => state.authUser);
+  const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
 
-  if (loading) {
+  if (isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-100">
-        <p className="text-base-content/70">Loading...</p>
+        <Loader className="h-10 w-10 animate-spin" />
       </div>
     );
   }
 
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (!authUser) {
+    return <Navigate to="/login" replace />;
   }
 
   return children;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Header from "../components/Header";
@@ -11,11 +11,19 @@ import { useAuth } from "../contexts/AuthContext";
 export default function SignupPage() {
   const navigate = useNavigate();
   const { user, loading, register } = useAuth();
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // ✅ redirect แบบถูกต้อง
+  useEffect(() => {
+    if (user) {
+      navigate("/chat", { replace: true });
+    }
+  }, [user, navigate]);
 
   if (loading) {
     return (
@@ -24,21 +32,46 @@ export default function SignupPage() {
       </div>
     );
   }
-  if (user) {
-    navigate("/chat", { replace: true });
-    return null;
-  }
+
+  const validateForm = () => {
+    if (!fullName.trim()) {
+      toast.error("Full name is required");
+      return false;
+    }
+    if (!email.trim()) {
+      toast.error("Email is required");
+      return false;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      toast.error("Invalid email format");
+      return false;
+    }
+    if (!password) {
+      toast.error("Password is required");
+      return false;
+    }
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     setError("");
     setSubmitting(true);
+
     try {
       await register(fullName, email, password);
       toast.success("Account created!");
       navigate("/chat", { replace: true });
     } catch (err) {
-      const msg = err.data?.message || err.message || "Registration failed";
+      const msg =
+        err?.response?.data?.message || err?.message || "Registration failed";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -55,53 +88,62 @@ export default function SignupPage() {
             <div className="mb-6 flex justify-center">
               <Logo size="lg" />
             </div>
-            <h1 className="text-2xl font-bold text-base-content mb-1">Create Account</h1>
-            <p className="text-base-content/70 text-sm mb-8">Get started with your free account</p>
+
+            <h1 className="text-2xl font-bold text-base-content mb-1">
+              Create Account
+            </h1>
+            <p className="text-base-content/70 text-sm mb-8">
+              Get started with your free account
+            </p>
+
             {error && (
               <p className="w-full text-sm text-red-400 bg-red-500/10 rounded-lg px-4 py-2">
                 {error}
               </p>
             )}
+
             <form onSubmit={handleSubmit} className="w-full space-y-5">
               <Input
                 label="Full Name"
                 type="text"
-                name="fullName"
                 placeholder="John Doe"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                required
               />
+
               <Input
                 label="Email"
                 type="email"
-                name="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
               />
+
               <Input
                 label="Password"
                 type="password"
-                name="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
               />
+
               <Button type="submit" disabled={submitting}>
                 {submitting ? "Creating account..." : "Create Account"}
               </Button>
             </form>
+
             <p className="mt-6 text-base-content/70 text-sm">
               Already have an account?{" "}
-              <Link to="/login" className="text-primary hover:underline font-medium">
+              <Link
+                to="/login"
+                className="text-primary hover:underline font-medium"
+              >
                 Sign in
               </Link>
             </p>
           </div>
         </div>
+
         <AuthPanel
           title="Join our community"
           description="Connect with friends, share moments, and stay in touch with your loved ones."

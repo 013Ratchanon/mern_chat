@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import * as userApi from "../api/user.api";
 import { useSocketStore } from "../stores/socketStore";
 
@@ -44,6 +50,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const data = await userApi.login({ email, password });
+    // Token is already stored by userApi.login()
     const userData = await userApi.checkAuth();
     setUser(userData);
     return data;
@@ -51,6 +58,7 @@ export function AuthProvider({ children }) {
 
   const register = async (fullname, email, password) => {
     const data = await userApi.register({ fullname, email, password });
+    // Token is already stored by userApi.register()
     const userData = await userApi.checkAuth();
     setUser(userData);
     return data;
@@ -74,7 +82,15 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const value = { user, loading, login, register, logout, checkAuth, refreshUser };
+  const value = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    checkAuth,
+    refreshUser,
+  };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

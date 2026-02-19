@@ -5,13 +5,33 @@ import SignupPage from "../pages/SignupPage";
 import ChatPage from "../pages/ChatPage";
 import SettingsPage from "../pages/SettingsPage";
 import ProfilePage from "../pages/ProfilePage";
+import { useAuthStore } from "../stores/useAuth";
+import { useEffect } from "react";
+import { Loader } from "lucide-react";
 
 export default function AppRouter() {
+  const { authUser, isCheckingAuth, checkAuth } = useAuthStore();
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+  if (isCheckingAuth && !authUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-base-100">
+        <Loader className="size-10 animate-spin" />
+      </div>
+    );
+  }
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
+      <Route
+        path="/login"
+        element={!authUser ? <LoginPage /> : <Navigate to="/chat" replace />}
+      />
+      <Route
+        path="/signup"
+        element={!authUser ? <SignupPage /> : <Navigate to="/chat" replace />}
+      />
       <Route
         path="/chat"
         element={

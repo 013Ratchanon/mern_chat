@@ -1,9 +1,12 @@
 import { apiRequest, API_ENDPOINTS } from "./client";
 
 export async function getMessagesWith(userId) {
-  return apiRequest(`${API_ENDPOINTS.messages}?with=${encodeURIComponent(userId)}`, {
-    method: "GET",
-  });
+  return apiRequest(
+    `${API_ENDPOINTS.messages}?with=${encodeURIComponent(userId)}`,
+    {
+      method: "GET",
+    },
+  );
 }
 
 export async function sendMessage(recipient, text, file = "") {
