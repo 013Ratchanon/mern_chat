@@ -1,54 +1,76 @@
 const MessageModel = require("../models/Message");
+const UserModel = require("../models/User");
+const cloudinary = require("../configs/cloudinary");
+const { getReceiverSocketId, io } = require("../lib/socket");
 
-exports.getMessagesWith = async (req, res) => {
+const getUsersForSidebar = async (req, res) => {
   try {
-    const me = req.user._id;
-    const otherId = req.query.with;
-    if (!otherId) {
-      return res.status(400).json({ message: "Query 'with' (userId) is required!" });
-    }
+    const loggedInUserId = req.user._id;
+    const fillerdUsers = await UserModel.find({
+      _id: { $ne: loggedInUserId },
+    }).select("-password");
+    res.status(200).json(fillerdUsers);
+  } catch (err) {
+    res.status(500).json({
+      message: err.message || "Internal server error While getting users info",
+    });
+  }
+};
+
+const getMessage = async (req, res) => {
+  try {
+    const myId = req.user._id;
+    const { id: userToChat } = req.params;
     const messages = await MessageModel.find({
       $or: [
-        { sender: me, recipient: otherId },
-        { sender: otherId, recipient: me },
+        {
+          sender: myId,
+          recipientId: userToChat,
+        },
+        {
+          sender: userToChat,
+          recipientId: myId,
+        },
       ],
-    })
-      .populate("sender", "fullname profilePicture")
-      .populate("recipient", "fullname profilePicture")
-      .sort({ createdAt: 1 })
-      .lean();
-    res.status(200).json(messages);
-  } catch (error) {
+    });
+    res.json(messages);
+  } catch (err) {
     res.status(500).json({
-      message: error.message || "Failed to get messages!",
+      message: err.message || "Internal server error While getting messages",
     });
   }
 };
 
-exports.sendMessage = async (req, res) => {
+const sendMessage = async (req, res) => {
   try {
+    const { id: recipientId } = req.params;
+    if (!recipientId) {
+      return res.status(400).json({ message: "Recipient ID is required" });
+    }
     const senderId = req.user._id;
-    const { recipient, text, file } = req.body;
-    if (!recipient) {
-      return res.status(400).json({ message: "recipient (userId) is required!" });
+    const { text, file } = req.body;
+    let fileUrl = "";
+    if (file) {
+      const uploadResponse = await cloudinary.uploader.upload(file);
+      fileUrl = uploadResponse.secure_url;
     }
-    if (!text && !file) {
-      return res.status(400).json({ message: "text or file is required!" });
-    }
-    const doc = await MessageModel.create({
-      sender: senderId,
-      recipient,
-      text: text || "",
-      file: file || "",
+    const newMessage = await new MessageModel({
+      senderId,
+      recipientId,
+      text,
+      file: fileUrl,
     });
-    const populated = await MessageModel.findById(doc._id)
-      .populate("sender", "fullname profilePicture")
-      .populate("recipient", "fullname profilePicture")
-      .lean();
-    res.status(201).json(populated);
-  } catch (error) {
+    await newMessage.save();
+  } catch (err) {
     res.status(500).json({
-      message: error.message || "Failed to send message!",
+      message: err.message || "Internal server error while sending message",
     });
   }
 };
+const messageController = {
+  getUsersForSidebar,
+  getMessage,
+  sendMessage,
+};
+
+module.exports = messageController;

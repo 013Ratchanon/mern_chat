@@ -1,13 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import toast from "react-hot-toast";
-import {
-  Users,
-  X,
-  Paperclip,
-  Smile,
-  Send,
-  MessageCircle,
-} from "lucide-react";
+import { Users, X, Paperclip, Smile, Send, MessageCircle } from "lucide-react";
 import Header from "../components/Header";
 import { useAuth } from "../contexts/AuthContext";
 import { useSocketStore } from "../stores/socketStore";
@@ -64,24 +57,32 @@ export default function ChatPage() {
   const messages = selectedId ? getMessages(selectedId) : [];
 
   const loadContacts = useCallback(async () => {
+    if (!me) return; // nothing to fetch when user is logged out
+
     setLoadingContacts(true);
     try {
       const list = await friendsApi.getFriends();
       setContacts(
         Array.isArray(list)
-          ? list.map((u) => ({ ...u, id: u._id, name: u.fullname, avatar: u.profilePicture }))
-          : []
+          ? list.map((u) => ({
+              ...u,
+              id: u._id,
+              name: u.fullname,
+              avatar: u.profilePicture,
+            }))
+          : [],
       );
     } catch {
       setContacts([]);
     } finally {
       setLoadingContacts(false);
     }
-  }, []);
+  }, [me]);
 
   useEffect(() => {
+    if (!me) return;
     loadContacts();
-  }, [loadContacts]);
+  }, [loadContacts, me]);
 
   useEffect(() => {
     if (!selectedId || !me) return;
@@ -121,9 +122,14 @@ export default function ChatPage() {
       addMessage(otherId, message);
       if (selectedId !== otherId) {
         const name = message.sender?.fullname || "Someone";
-        toast(`${name}: ${(message.text || "").slice(0, 40)}${(message.text || "").length > 40 ? "…" : ""}`, {
-          icon: "💬",
-        });
+        toast(
+          `${name}: ${(message.text || "").slice(0, 40)}${
+            (message.text || "").length > 40 ? "…" : ""
+          }`,
+          {
+            icon: "💬",
+          },
+        );
       }
     };
     socket.on("new_message", onNewMessage);
@@ -153,11 +159,17 @@ export default function ChatPage() {
         setAddFriendError("No user found");
         return;
       }
-      if (users.length > 1 && !users.some((u) => u.email === q || u.fullname === q)) {
+      if (
+        users.length > 1 &&
+        !users.some((u) => u.email === q || u.fullname === q)
+      ) {
         setAddFriendError("Multiple users – use full email");
         return;
       }
-      const toAdd = users.length === 1 ? users[0] : users.find((u) => u.email === q) || users[0];
+      const toAdd =
+        users.length === 1
+          ? users[0]
+          : users.find((u) => u.email === q) || users[0];
       await friendsApi.addFriend(toAdd._id);
       setAddFriendSuccess(`Added ${toAdd.fullname || toAdd.email}`);
       setAddFriendEmail("");
@@ -189,21 +201,17 @@ export default function ChatPage() {
       return;
     }
     setSending(true);
-    socket.emit(
-      "send_message",
-      { recipientId: selectedId, text },
-      (res) => {
-        setSending(false);
-        if (res?.error) {
-          toast.error(res.error);
-          return;
-        }
-        if (res?.message) {
-          addMessage(selectedId, res.message);
-          setMessageInput("");
-        }
+    socket.emit("send_message", { recipientId: selectedId, text }, (res) => {
+      setSending(false);
+      if (res?.error) {
+        toast.error(res.error);
+        return;
       }
-    );
+      if (res?.message) {
+        addMessage(selectedId, res.message);
+        setMessageInput("");
+      }
+    });
   };
 
   const filteredContacts = contacts;
@@ -219,12 +227,17 @@ export default function ChatPage() {
               <Users className="w-5 h-5 text-base-content/60" />
               <h2 className="font-semibold text-base-content">Contacts</h2>
               {connected && (
-                <span className="w-2 h-2 rounded-full bg-success" title="Connected" />
+                <span
+                  className="w-2 h-2 rounded-full bg-success"
+                  title="Connected"
+                />
               )}
             </div>
             <label className="flex items-center gap-2 cursor-pointer text-base-content/70 text-sm">
               <span>Show online only</span>
-              <span className="text-base-content/50">({onlineCount} online)</span>
+              <span className="text-base-content/50">
+                ({onlineCount} online)
+              </span>
             </label>
           </div>
           <div className="flex-1 overflow-auto">
@@ -234,7 +247,9 @@ export default function ChatPage() {
               </div>
             ) : filteredContacts.length === 0 ? (
               <div className="flex items-center justify-center px-4 py-8">
-                <p className="text-sm text-base-content/50">No contacts. Add friends to chat.</p>
+                <p className="text-sm text-base-content/50">
+                  No contacts. Add friends to chat.
+                </p>
               </div>
             ) : (
               <ul className="p-2 space-y-0.5">
@@ -244,7 +259,9 @@ export default function ChatPage() {
                       type="button"
                       onClick={() => setSelectedId(contact.id || contact._id)}
                       className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                        (contact.id || contact._id) === selectedId ? "bg-primary/20" : "hover:bg-base-300"
+                        (contact.id || contact._id) === selectedId
+                          ? "bg-primary/20"
+                          : "hover:bg-base-300"
                       }`}
                     >
                       <Avatar
@@ -272,9 +289,12 @@ export default function ChatPage() {
                 <div className="w-20 h-20 rounded-xl bg-primary/20 flex items-center justify-center mb-6 ring-2 ring-primary/30">
                   <MessageCircle className="w-10 h-10 text-primary" />
                 </div>
-                <h2 className="text-xl font-bold text-base-content mb-2">Welcome to SE Chat!</h2>
+                <h2 className="text-xl font-bold text-base-content mb-2">
+                  Welcome to SE Chat!
+                </h2>
                 <p className="text-sm text-base-content/70 mb-6">
-                  Select a conversation from the sidebar or add a friend by email.
+                  Select a conversation from the sidebar or add a friend by
+                  email.
                 </p>
                 <div className="w-full max-w-sm flex flex-col gap-2">
                   <input
@@ -296,8 +316,12 @@ export default function ChatPage() {
                   >
                     {addFriendLoading ? "Adding…" : "Add Friend"}
                   </button>
-                  {addFriendError && <p className="text-sm text-error">{addFriendError}</p>}
-                  {addFriendSuccess && <p className="text-sm text-success">{addFriendSuccess}</p>}
+                  {addFriendError && (
+                    <p className="text-sm text-error">{addFriendError}</p>
+                  )}
+                  {addFriendSuccess && (
+                    <p className="text-sm text-success">{addFriendSuccess}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -307,7 +331,9 @@ export default function ChatPage() {
                 <div className="flex items-center gap-3">
                   <Avatar
                     name={selectedContact.name || selectedContact.fullname}
-                    src={selectedContact.avatar || selectedContact.profilePicture}
+                    src={
+                      selectedContact.avatar || selectedContact.profilePicture
+                    }
                   />
                   <div>
                     <p className="font-medium text-base-content">
@@ -353,8 +379,12 @@ export default function ChatPage() {
                         {addFriendLoading ? "Adding…" : "Add Friend"}
                       </button>
                     </div>
-                    {addFriendError && <p className="text-sm text-error">{addFriendError}</p>}
-                    {addFriendSuccess && <p className="text-sm text-success">{addFriendSuccess}</p>}
+                    {addFriendError && (
+                      <p className="text-sm text-error">{addFriendError}</p>
+                    )}
+                    {addFriendSuccess && (
+                      <p className="text-sm text-success">{addFriendSuccess}</p>
+                    )}
                   </div>
                 ) : loadingMessages ? (
                   <div className="flex items-center justify-center h-full">
@@ -366,11 +396,14 @@ export default function ChatPage() {
                       const isMe =
                         msg.sender?._id === me?._id || msg.sender === me?._id;
                       const senderName =
-                        msg.sender?.fullname || (isMe ? "Me" : selectedContact?.fullname);
+                        msg.sender?.fullname ||
+                        (isMe ? "Me" : selectedContact?.fullname);
                       return (
                         <div
                           key={msg._id}
-                          className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}
+                          className={`flex gap-2 ${
+                            isMe ? "flex-row-reverse" : ""
+                          }`}
                         >
                           <Avatar
                             name={senderName}
@@ -409,7 +442,10 @@ export default function ChatPage() {
               </div>
 
               <div className="shrink-0 p-4 border-t border-base-300 bg-base-200">
-                <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
+                <form
+                  onSubmit={handleSendMessage}
+                  className="flex gap-2 items-end"
+                >
                   <input
                     type="text"
                     value={messageInput}

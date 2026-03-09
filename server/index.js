@@ -7,10 +7,9 @@ const userRouter = require("./routers/user.router");
 const friendRouter = require("./routers/friend.router");
 const messageRouter = require("./routers/message.router");
 const cookieParser = require("cookie-parser");
-const { initSocket } = require("./socket");
 dotenv.config();
+const { app, server } = require("./lib/socket");
 
-const app = express();
 const httpServer = http.createServer(app);
 const PORT = process.env.PORT;
 const BASE_URL = process.env.BASE_URL;
@@ -48,8 +47,6 @@ app.use("/api/v1/user", userRouter);
 app.use("/api/v1/friends", friendRouter);
 app.use("/api/v1/messages", messageRouter);
 
-initSocket(httpServer);
-
-httpServer.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log("Server is running on http://localhost:" + PORT);
 });

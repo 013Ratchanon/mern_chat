@@ -1,5 +1,6 @@
 import { useAuthStore } from "../stores/useAuth";
 import { Navigate } from "react-router-dom";
+import { Loader } from "lucide-react";
 
 export default function ProtectedRoute({ children }) {
   const authUser = useAuthStore((state) => state.authUser);

@@ -2,13 +2,16 @@ import { Link, useNavigate } from "react-router-dom";
 import { Settings, User, LogOut } from "lucide-react";
 import Logo from "./Logo";
 import { useAuth } from "../contexts/AuthContext";
+import { useAuthStore } from "../stores/useAuth";
 
 export default function Header({ variant = "auth" }) {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout: ctxLogout } = useAuth();
+  const storeLogout = useAuthStore((s) => s.logout);
 
   const handleLogout = async () => {
-    await logout();
+    // make sure both context and store are cleared
+    await Promise.all([ctxLogout(), storeLogout()]);
     navigate("/login");
   };
 
@@ -30,11 +33,17 @@ export default function Header({ variant = "auth" }) {
         </Link>
       ) : (
         <nav className="flex items-center gap-6">
-          <Link to="/settings" className="flex items-center gap-2 text-base-content/70 hover:text-primary transition-colors">
+          <Link
+            to="/settings"
+            className="flex items-center gap-2 text-base-content/70 hover:text-primary transition-colors"
+          >
             <Settings className="w-5 h-5" />
             Settings
           </Link>
-          <Link to="/profile" className="flex items-center gap-2 text-base-content/70 hover:text-primary transition-colors">
+          <Link
+            to="/profile"
+            className="flex items-center gap-2 text-base-content/70 hover:text-primary transition-colors"
+          >
             <User className="w-5 h-5" />
             Profile
           </Link>
