@@ -1,4 +1,4 @@
-import { useAuthStore } from "../stores/useAuth";
+import { useAuthStore } from "../stores/useAuthStore";
 import { Navigate } from "react-router-dom";
 import { Loader } from "lucide-react";
 

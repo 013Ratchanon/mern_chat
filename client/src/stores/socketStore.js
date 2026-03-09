@@ -9,6 +9,7 @@ const getSocketUrl = () => {
 export const useSocketStore = create((set, get) => ({
   socket: null,
   connected: false,
+  onlineUsers: [],
 
   connect: (token) => {
     const { socket } = get();
@@ -20,7 +21,8 @@ export const useSocketStore = create((set, get) => ({
       transports: ["websocket", "polling"],
     });
     s.on("connect", () => set({ connected: true }));
-    s.on("disconnect", () => set({ connected: false }));
+    s.on("disconnect", () => set({ connected: false, onlineUsers: [] }));
+    s.on("getOnlineUsers", (users) => set({ onlineUsers: users }));
     set({ socket: s, connected: s.connected });
     return s;
   },
@@ -29,7 +31,7 @@ export const useSocketStore = create((set, get) => ({
     const { socket } = get();
     if (socket) {
       socket.disconnect();
-      set({ socket: null, connected: false });
+      set({ socket: null, connected: false, onlineUsers: [] });
     }
   },
 }));

@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Settings, User, LogOut } from "lucide-react";
 import Logo from "./Logo";
 import { useAuth } from "../contexts/AuthContext";
-import { useAuthStore } from "../stores/useAuth";
+import { useAuthStore } from "../stores/useAuthStore";
 
 export default function Header({ variant = "auth" }) {
   const navigate = useNavigate();

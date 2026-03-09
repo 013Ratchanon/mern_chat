@@ -8,7 +8,7 @@ import AuthPanel from "../components/AuthPanel";
 import Input from "../components/Input";
 import Button from "../components/Button";
 import { useAuth } from "../contexts/AuthContext";
-import { useAuthStore } from "../stores/useAuth";
+import { useAuthStore } from "../stores/useAuthStore";
 
 export default function LoginPage() {
   const navigate = useNavigate();

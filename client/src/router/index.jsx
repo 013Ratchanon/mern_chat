@@ -5,7 +5,7 @@ import SignupPage from "../pages/SignupPage";
 import ChatPage from "../pages/ChatPage";
 import SettingsPage from "../pages/SettingsPage";
 import ProfilePage from "../pages/ProfilePage";
-import { useAuthStore } from "../stores/useAuth";
+import { useAuthStore } from "../stores/useAuthStore";
 import { useEffect } from "react";
 import { Loader } from "lucide-react";
 
